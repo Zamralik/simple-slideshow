@@ -1,0 +1,48 @@
+simple-slideshow
+{
+	display: block;
+	width: 100%;
+}
+
+slideshow-viewport
+{
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 200px;
+	overflow: hidden;
+}
+
+slideshow-rail
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: stretch;
+	height: 100%;
+
+	simple-slideshow.slide &
+	{
+		max-width: none;
+	}
+
+	simple-slideshow.fade &
+	{
+		width: 100%;
+	}
+}
+
+slideshow-slide
+{
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	&:nth-child(n + 2)
+	{
+		margin-left: 15px;
+	}
+}
