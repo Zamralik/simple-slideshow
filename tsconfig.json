@@ -1,0 +1,42 @@
+{
+	"compilerOptions": {
+		"outDir": "/build/js",
+		"target": "esnext",
+		"module": "esnext",
+		"lib": ["dom", "esnext"],
+		"listFiles": false,
+		"listEmittedFiles": true,
+		"allowJs": false,
+		"checkJs": false,
+		"sourceMap": false,
+		"esModuleInterop": false,
+		"charset": "UTF-8",
+		"newLine": "LF",
+		"forceConsistentCasingInFileNames": true,
+		"pretty": true,
+		"strict": true,
+		"strictPropertyInitialization": true,
+		"strictBindCallApply": true,
+		"alwaysStrict": true,
+		"removeComments": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"allowUnusedLabels": false,
+		"allowUnreachableCode": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitOverride": true,
+		"noFallthroughCasesInSwitch": true,
+		"noErrorTruncation": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": true,
+		"useUnknownInCatchVariables": true
+	},
+	"include": [
+		"./sources/ts"
+	]
+}

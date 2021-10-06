@@ -1,0 +1,24 @@
+{
+	"name": "simple-slideshow",
+	"version": "1.0.0",
+	"description": "A simple slideshow",
+	"main": "build/js/simple-slideshow.js",
+	"devDependencies": {
+		"@typescript-eslint/eslint-plugin": "^4.6.1",
+		"@typescript-eslint/eslint-plugin-tslint": "^4.6.1",
+		"@typescript-eslint/parser": "^4.6.1",
+		"eslint": "^7.12.1",
+		"eslint-plugin-import": "^2.22.1",
+		"eslint-plugin-no-null": "^1.0.2",
+		"eslint-plugin-prefer-arrow": "^1.2.2"
+	},
+	"scripts": {
+		"build": "npx eslint ts && tsc"
+	},
+	"author": {
+		"name": "Benjamin Blum",
+		"email": "zamralik@gmail.com",
+		"site": "https://github.com/Zamralik"
+	},
+	"license": "MIT"
+}

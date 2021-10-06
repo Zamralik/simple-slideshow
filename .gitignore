@@ -1,0 +1,15 @@
+# Excluded directory
+
+node_modules
+tmp
+
+# Excluded files
+
+package-lock.json
+.DS_Store
+.vscode
+*.log
+*.code-workspace
+
+!.dummy
+!.gitkeep
