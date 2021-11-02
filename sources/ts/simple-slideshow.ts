@@ -175,7 +175,7 @@ class SimpleSlideshow extends HTMLElement
 
 		if (flag)
 		{
-			const WIDTH: string = this.toPixel(this.computeViewportWidth());
+			const WIDTH: string = this.toPixel(this.getViewportRect().width);
 
 			this.slides.forEach(
 				(slide: HTMLElement): void =>
@@ -318,9 +318,24 @@ class SimpleSlideshow extends HTMLElement
 	{
 		++this.activeIndex;
 
-		if (this.activeIndex >= this.slides.length)
+		const LAST_SLIDE: number = this.slides.length - 1;
+
+		if (this.activeIndex > LAST_SLIDE)
 		{
 			this.activeIndex = 0;
+		}
+		else if (this.animation === AnimationName.slide && !this.fullWidthSlide)
+		{
+			const VIEWPORT_RIGHT: number = this.getViewportRect().right;
+			const SLIDE_RIGHT: number = this.getSlideRect(LAST_SLIDE).right;
+
+			if (SLIDE_RIGHT < VIEWPORT_RIGHT)
+			{
+				this.skipNextAutoplay = true;
+				this.activeIndex = LAST_SLIDE;
+
+				return;
+			}
 		}
 
 		this.slideTransition();
@@ -370,8 +385,6 @@ class SimpleSlideshow extends HTMLElement
 			"touchstart",
 			(event: TouchEvent): void =>
 			{
-				event.preventDefault();
-
 				if (this.touchId !== 0)
 				{
 					return;
@@ -398,7 +411,6 @@ class SimpleSlideshow extends HTMLElement
 			"mousedown",
 			(event: MouseEvent): void =>
 			{
-				event.preventDefault();
 				this.dragStart(event.clientX);
 			},
 			{
@@ -460,7 +472,7 @@ class SimpleSlideshow extends HTMLElement
 			this.resizeId = 0;
 		}
 
-		const WIDTH: string = this.toPixel(this.computeViewportWidth());
+		const WIDTH: string = this.toPixel(this.getViewportRect().width);
 
 		if (this.fullWidthSlide)
 		{
@@ -525,7 +537,7 @@ class SimpleSlideshow extends HTMLElement
 	private initializeSlides(configuration: Configuration): void
 	{
 		const ELEMENTS: Array<HTMLElement> = this.extractElements(configuration);
-		const WIDTH: string = this.toPixel(this.computeViewportWidth());
+		const WIDTH: string = this.toPixel(this.getViewportRect().width);
 
 		ELEMENTS.forEach(
 			(element: HTMLElement): void =>
@@ -582,10 +594,10 @@ class SimpleSlideshow extends HTMLElement
 
 		if (this.animation === AnimationName.slide)
 		{
-			const SLIDE_OFFSET: number = this.computeSlideLeft(this.activeIndex);
-			const RAIL_OFFSET: number = this.computeRailLeft();
+			const SLIDE_LEFT: number = this.getSlideRect(this.activeIndex).left;
+			const RAIL_LEFT: number = this.getRailRect().left;
 
-			this.currentOffset = RAIL_OFFSET - SLIDE_OFFSET;
+			this.currentOffset = RAIL_LEFT - SLIDE_LEFT;
 			this.rail.style.left = this.toPixel(this.currentOffset);
 		}
 	}
@@ -607,22 +619,17 @@ class SimpleSlideshow extends HTMLElement
 		);
 	}
 
-	private computeViewportWidth(): number
+	private getViewportRect(): DOMRect
 	{
-		return this.viewport.getBoundingClientRect().width;
+		return this.viewport.getBoundingClientRect();
 	}
 
-	private computeViewportLeft(): number
+	private getRailRect(): DOMRect
 	{
-		return this.viewport.getBoundingClientRect().left;
+		return this.rail.getBoundingClientRect();
 	}
 
-	private computeRailLeft(): number
-	{
-		return this.rail.getBoundingClientRect().left;
-	}
-
-	private computeSlideLeft(index: number): number
+	private getSlideRect(index: number): DOMRect
 	{
 		const SLIDE: HTMLElement|null = this.slides[index];
 
@@ -631,12 +638,12 @@ class SimpleSlideshow extends HTMLElement
 			throw new Error("No slide matching index");
 		}
 
-		return SLIDE.getBoundingClientRect().left;
+		return SLIDE.getBoundingClientRect();
 	}
 
 	private updateRailWidth(): void
 	{
-		let width: number = this.computeViewportWidth();
+		let width: number = this.getViewportRect().width;
 
 		if (this.animation === AnimationName.slide)
 		{
@@ -661,8 +668,6 @@ class SimpleSlideshow extends HTMLElement
 			"touchmove",
 			(event: TouchEvent): void =>
 			{
-				event.preventDefault();
-
 				const TOUCH: Touch|undefined = this.findTouch(event.changedTouches);
 
 				if (TOUCH instanceof Touch)
@@ -679,8 +684,6 @@ class SimpleSlideshow extends HTMLElement
 			"touchend",
 			(event: TouchEvent): void =>
 			{
-				event.preventDefault();
-
 				const TOUCH: Touch|undefined = this.findTouch(event.changedTouches);
 
 				if (TOUCH instanceof Touch)
@@ -697,7 +700,6 @@ class SimpleSlideshow extends HTMLElement
 			"mousemove",
 			(event: MouseEvent): void =>
 			{
-				event.preventDefault();
 				this.dragUpdate(event.clientX);
 			},
 			{
@@ -707,9 +709,8 @@ class SimpleSlideshow extends HTMLElement
 
 		this.rail.addEventListener(
 			"mouseup",
-			(event: MouseEvent): void =>
+			(): void =>
 			{
-				event.preventDefault();
 				this.dragEnd();
 			},
 			{
@@ -719,9 +720,8 @@ class SimpleSlideshow extends HTMLElement
 
 		this.rail.addEventListener(
 			"mouseleave",
-			(event: MouseEvent): void =>
+			(): void =>
 			{
-				event.preventDefault();
 				this.dragEnd();
 			},
 			{
@@ -752,7 +752,7 @@ class SimpleSlideshow extends HTMLElement
 		this.beingDraggedRemote = null;
 		this.touchId = 0;
 
-		const THRESHOLD: number = this.computeViewportLeft();
+		const VIEWPORT_LEFT: number = this.getViewportRect().left;
 
 		const LAST_INDEX: number = this.slides.length - 1;
 		let new_index: number = LAST_INDEX;
@@ -761,9 +761,9 @@ class SimpleSlideshow extends HTMLElement
 		{
 			if (index < new_index)
 			{
-				const LEFT: number = this.computeSlideLeft(index);
+				const SLIDE_LEFT: number = this.getSlideRect(index).left;
 
-				if (THRESHOLD <= LEFT)
+				if (VIEWPORT_LEFT <= SLIDE_LEFT)
 				{
 					new_index = index;
 				}

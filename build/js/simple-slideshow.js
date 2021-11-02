@@ -76,7 +76,7 @@ class SimpleSlideshow extends HTMLElement {
         }
         this.fullWidthSlide = flag;
         if (flag) {
-            const WIDTH = this.toPixel(this.computeViewportWidth());
+            const WIDTH = this.toPixel(this.getViewportRect().width);
             this.slides.forEach((slide) => {
                 slide.style.width = WIDTH;
             });
@@ -155,8 +155,18 @@ class SimpleSlideshow extends HTMLElement {
     }
     nextSlide() {
         ++this.activeIndex;
-        if (this.activeIndex >= this.slides.length) {
+        const LAST_SLIDE = this.slides.length - 1;
+        if (this.activeIndex > LAST_SLIDE) {
             this.activeIndex = 0;
+        }
+        else if (this.animation === "slide" && !this.fullWidthSlide) {
+            const VIEWPORT_RIGHT = this.getViewportRect().right;
+            const SLIDE_RIGHT = this.getSlideRect(LAST_SLIDE).right;
+            if (SLIDE_RIGHT < VIEWPORT_RIGHT) {
+                this.skipNextAutoplay = true;
+                this.activeIndex = LAST_SLIDE;
+                return;
+            }
         }
         this.slideTransition();
     }
@@ -185,7 +195,6 @@ class SimpleSlideshow extends HTMLElement {
         }
         this.draggableRemote = new AbortController();
         this.rail.addEventListener("touchstart", (event) => {
-            event.preventDefault();
             if (this.touchId !== 0) {
                 return;
             }
@@ -201,7 +210,6 @@ class SimpleSlideshow extends HTMLElement {
             signal: this.draggableRemote.signal
         });
         this.rail.addEventListener("mousedown", (event) => {
-            event.preventDefault();
             this.dragStart(event.clientX);
         }, {
             signal: this.draggableRemote.signal
@@ -239,7 +247,7 @@ class SimpleSlideshow extends HTMLElement {
             clearTimeout(this.resizeId);
             this.resizeId = 0;
         }
-        const WIDTH = this.toPixel(this.computeViewportWidth());
+        const WIDTH = this.toPixel(this.getViewportRect().width);
         if (this.fullWidthSlide) {
             this.slides.forEach((slide) => {
                 slide.style.setProperty("width", WIDTH);
@@ -278,7 +286,7 @@ class SimpleSlideshow extends HTMLElement {
     }
     initializeSlides(configuration) {
         const ELEMENTS = this.extractElements(configuration);
-        const WIDTH = this.toPixel(this.computeViewportWidth());
+        const WIDTH = this.toPixel(this.getViewportRect().width);
         ELEMENTS.forEach((element) => {
             const SLIDE = document.createElement("slideshow-slide");
             SLIDE.append(element);
@@ -312,9 +320,9 @@ class SimpleSlideshow extends HTMLElement {
         this.skipNextAutoplay = true;
         this.updateActive();
         if (this.animation === "slide") {
-            const SLIDE_OFFSET = this.computeSlideLeft(this.activeIndex);
-            const RAIL_OFFSET = this.computeRailLeft();
-            this.currentOffset = RAIL_OFFSET - SLIDE_OFFSET;
+            const SLIDE_LEFT = this.getSlideRect(this.activeIndex).left;
+            const RAIL_LEFT = this.getRailRect().left;
+            this.currentOffset = RAIL_LEFT - SLIDE_LEFT;
             this.rail.style.left = this.toPixel(this.currentOffset);
         }
     }
@@ -326,24 +334,21 @@ class SimpleSlideshow extends HTMLElement {
             bullet.classList.toggle("active", this.activeIndex === index);
         });
     }
-    computeViewportWidth() {
-        return this.viewport.getBoundingClientRect().width;
+    getViewportRect() {
+        return this.viewport.getBoundingClientRect();
     }
-    computeViewportLeft() {
-        return this.viewport.getBoundingClientRect().left;
+    getRailRect() {
+        return this.rail.getBoundingClientRect();
     }
-    computeRailLeft() {
-        return this.rail.getBoundingClientRect().left;
-    }
-    computeSlideLeft(index) {
+    getSlideRect(index) {
         const SLIDE = this.slides[index];
         if (SLIDE === null) {
             throw new Error("No slide matching index");
         }
-        return SLIDE.getBoundingClientRect().left;
+        return SLIDE.getBoundingClientRect();
     }
     updateRailWidth() {
-        let width = this.computeViewportWidth();
+        let width = this.getViewportRect().width;
         if (this.animation === "slide") {
             width *= this.slides.length + 4000;
         }
@@ -357,7 +362,6 @@ class SimpleSlideshow extends HTMLElement {
         this.dragStartingPoint = mouse_position;
         this.beingDraggedRemote = new AbortController();
         window.addEventListener("touchmove", (event) => {
-            event.preventDefault();
             const TOUCH = this.findTouch(event.changedTouches);
             if (TOUCH instanceof Touch) {
                 this.dragUpdate(TOUCH.clientX);
@@ -366,7 +370,6 @@ class SimpleSlideshow extends HTMLElement {
             signal: this.beingDraggedRemote.signal
         });
         window.addEventListener("touchend", (event) => {
-            event.preventDefault();
             const TOUCH = this.findTouch(event.changedTouches);
             if (TOUCH instanceof Touch) {
                 this.dragEnd();
@@ -375,19 +378,16 @@ class SimpleSlideshow extends HTMLElement {
             signal: this.beingDraggedRemote.signal
         });
         this.rail.addEventListener("mousemove", (event) => {
-            event.preventDefault();
             this.dragUpdate(event.clientX);
         }, {
             signal: this.beingDraggedRemote.signal
         });
-        this.rail.addEventListener("mouseup", (event) => {
-            event.preventDefault();
+        this.rail.addEventListener("mouseup", () => {
             this.dragEnd();
         }, {
             signal: this.beingDraggedRemote.signal
         });
-        this.rail.addEventListener("mouseleave", (event) => {
-            event.preventDefault();
+        this.rail.addEventListener("mouseleave", () => {
             this.dragEnd();
         }, {
             signal: this.beingDraggedRemote.signal
@@ -408,13 +408,13 @@ class SimpleSlideshow extends HTMLElement {
         this.beingDraggedRemote.abort();
         this.beingDraggedRemote = null;
         this.touchId = 0;
-        const THRESHOLD = this.computeViewportLeft();
+        const VIEWPORT_LEFT = this.getViewportRect().left;
         const LAST_INDEX = this.slides.length - 1;
         let new_index = LAST_INDEX;
         for (let index = 0; index < LAST_INDEX; ++index) {
             if (index < new_index) {
-                const LEFT = this.computeSlideLeft(index);
-                if (THRESHOLD <= LEFT) {
+                const SLIDE_LEFT = this.getSlideRect(index).left;
+                if (VIEWPORT_LEFT <= SLIDE_LEFT) {
                     new_index = index;
                 }
             }
